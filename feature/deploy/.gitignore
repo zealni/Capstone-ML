@@ -1,0 +1,14 @@
+venv/
+nama_file.csv
+gen_req.py
+/static/images/
+features.pkl
+__pycache__
+/generating_code/
+/eval_matriks/
+/images/
+mongotest.py
+nltkdwnld.py
+.env
+.venv310/
+.venv314/

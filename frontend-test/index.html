@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon & Recipe App</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; }
+    textarea { width: 100%; height: 100px; }
+    button { padding: 0.5rem 1rem; margin: 0.5rem 0; }
+    pre { background: #f4f4f4; padding: 1rem; overflow:auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Carbon & Recipe Calculator</h1>
+  <label>Masukkan bahan (contoh: “100 gram chicken, 50 gram rice”):</label>
+  <textarea id="inputText"></textarea>
+  <button id="btnProcess">Proses Lengkap</button>
+
+  <h2>Hasil Lengkap</h2>
+  <pre id="result">—</pre>
+
+  <script>
+    const baseURL = "https://capstone-ml-production.up.railway.app";
+
+    document.getElementById("btnProcess").onclick = async () => {
+      const text = document.getElementById("inputText").value;
+      document.getElementById("result").textContent = "⏳ Memproses...";
+      try {
+        const res = await fetch(baseURL + "/full", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+        const j = await res.json();
+
+        let output = "";
+
+        output += "📦 Parsed Bahan:\n";
+        if (Array.isArray(j.items)) {
+          j.items.forEach(item => {
+            output += `- ${item.quantity} ${item.unit} ${item.ingredient}\n`;
+          });
+        }
+
+        output += `\n🌍 Total Jejak Karbon: ${j.total_carbon ?? "?"} kg CO2\n`;
+
+        output += "\n📋 Rekomendasi Resep:\n";
+        if (Array.isArray(j.recipes)) {
+          j.recipes.forEach((r, idx) => {
+            output += `${idx + 1}. ${r.Title_Cleaned || r.title || "Tanpa Judul"}\n`;
+          });
+        }
+
+        if (j.selected_recipe) {
+          const selected = j.selected_recipe;
+          output += `\n📖 Detail Resep: ${selected.Title_Cleaned || selected.title || "Tanpa Judul"}\n`;
+
+          const instructions = selected.Instructions_Cleaned || selected.instructions;
+          if (Array.isArray(instructions)) {
+            output += "\n📝 Instructions:\n";
+            instructions.forEach(step => {
+              output += `- ${step}\n`;
+            });
+          }
+
+          const ingredients = selected.Cleaned_Ingredients || selected.ingredients;
+          if (Array.isArray(ingredients)) {
+            output += "\n🍽 Ingredients:\n";
+            ingredients.forEach(ing => {
+              output += `- ${ing}\n`;
+            });
+          }
+        }
+
+        if (Array.isArray(j.leftovers) && j.leftovers.length) {
+          output += "\n🧾 Bahan Tersisa:\n";
+          j.leftovers.forEach(l => output += `- ${l}\n`);
+        }
+
+        if (Array.isArray(j.missing) && j.missing.length) {
+          output += "\n🛒 Bahan yang Kurang:\n";
+          j.missing.forEach(m => output += `- ${m}\n`);
+        }
+
+        document.getElementById("result").textContent = output;
+      } catch (err) {
+        document.getElementById("result").textContent = "❌ Terjadi kesalahan: " + err;
+      }
+    };
+  </script>
+</body>
+</html>

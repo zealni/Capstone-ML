@@ -1,0 +1,9 @@
+tensorflow-cpu
+scikit-learn
+numpy
+pillow
+fastapi
+uvicorn[standard]
+python-multipart
+cloudinary
+pymongo
